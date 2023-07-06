@@ -3,6 +3,17 @@ spring:
   config:
     import: optional:file:.env[.properties]
   kafka:
+    topic: rent-events
+    bootstrap-servers: ${KAFKA_URL}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring:
+          json:
+            add:
+              type:
+                headers: false
     streams:
       application-id: kafka-streams-demo
       bootstrap-servers: ${KAFKA_URL}

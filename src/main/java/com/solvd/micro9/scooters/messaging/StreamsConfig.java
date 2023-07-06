@@ -3,7 +3,6 @@ package com.solvd.micro9.scooters.messaging;
 import com.solvd.micro9.scooters.domain.Currency;
 import com.solvd.micro9.scooters.domain.RentEvent;
 import com.solvd.micro9.scooters.messaging.serde.CustomSerdes;
-import lombok.RequiredArgsConstructor;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -15,6 +14,8 @@ import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.Stores;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -22,21 +23,22 @@ import java.time.LocalDate;
 import java.util.Map;
 
 @Component
-@RequiredArgsConstructor
 public class StreamsConfig {
 
     public static final String USER_EXPENSES_VIEW = "user-expense";
-    private static final String SOURCE_TOPIC = "rent-events";
     private static final String SINK_TOPIC = "income";
     private static final String SPLIT_BY_CURRENCY = "split-by-currency-";
     private static final String USD_BRANCH = Currency.USD.name();
     private static final String BYN_BRANCH = Currency.BYN.name();
-    private final StreamsBuilder streamsBuilder;
 
-    public void buildPipeline() {
+    @Value("${spring.kafka.topic}")
+    private String sourceTopic;
+
+    @Autowired
+    public void buildPipeline(final StreamsBuilder streamsBuilder) {
         Map<String, KStream<String, RentEvent>> eventsStream = streamsBuilder
                 .stream(
-                        SOURCE_TOPIC,
+                        sourceTopic,
                         Consumed.with(Serdes.String(), CustomSerdes.RentEvent())
                 )
                 .split(Named.as(SPLIT_BY_CURRENCY))

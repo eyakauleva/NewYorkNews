@@ -1,7 +1,7 @@
 package com.solvd.micro9.scooters.service.impl;
 
 import com.solvd.micro9.scooters.domain.RentEvent;
-import com.solvd.micro9.scooters.messaging.KfProducer;
+import com.solvd.micro9.scooters.messaging.RentEventProducer;
 import com.solvd.micro9.scooters.service.RentEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RentEventServiceImpl implements RentEventService {
 
-    private final KfProducer kfProducer;
+    private final RentEventProducer kfProducer;
 
     @Override
     public void save(final RentEvent event) {

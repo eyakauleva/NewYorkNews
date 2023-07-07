@@ -10,6 +10,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,11 @@ public class KStreamsIT extends KafkaTestcontainers {
         );
     }
 
+    @AfterEach
+    void teardown() {
+        testDriver.close();
+    }
+
     @Test
     void verifyInputTopicProcessedAndSentToOutputTopic() {
         Assertions.assertTrue(outputTopic.isEmpty());
@@ -70,15 +76,22 @@ public class KStreamsIT extends KafkaTestcontainers {
                 rentEventWithUSD,
                 rentEventEndedNotToday
         );
-        rentEvents.forEach(event -> inputTopic.pipeInput(event.getId(), event));
-
-
+        BigDecimal resultIncome = BigDecimal.ZERO;
+        for (RentEvent event : rentEvents) {
+            inputTopic.pipeInput(event.getId(), event);
+            if (event.getCurrency().equals(Currency.USD)) {
+                BigDecimal convertedToByn = event.getPrice().multiply(
+                        BigDecimal.valueOf(KStreamConfig.USD_TO_BYN_RATE)
+                );
+                resultIncome = resultIncome.add(convertedToByn);
+            } else {
+                resultIncome = resultIncome.add(event.getPrice());
+            }
+        }
         List<BigDecimal> resultValues = outputTopic.readValuesToList();
-        System.out.println("RES = " + resultValues);
-
-        Assertions.assertEquals(resultValues.size(), rentEvents.size());
-
-        //Assertions.assertEquals(outputTopic.readValue(), rentEvent.getPrice());
+        Assertions.assertEquals(rentEvents.size(), resultValues.size());
+        BigDecimal finalResultValue = resultValues.get(resultValues.size() - 1);
+        Assertions.assertEquals(resultIncome, finalResultValue);
         Assertions.assertTrue(outputTopic.isEmpty());
     }
 

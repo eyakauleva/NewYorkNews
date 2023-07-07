@@ -26,6 +26,7 @@ import java.util.Map;
 public class KStreamConfig {
 
     public static final String USER_EXPENSES_VIEW = "user-expense";
+    public static final double USD_TO_BYN_RATE = 3.0;
     private static final String SINK_TOPIC = "income";
     private static final String SPLIT_BY_CURRENCY = "split-by-currency-";
     private static final String USD_BRANCH = Currency.USD.name();
@@ -54,7 +55,7 @@ public class KStreamConfig {
         KStream<String, RentEvent> usdConvertedToByn = eventsStream
                 .get(SPLIT_BY_CURRENCY + USD_BRANCH)
                 .mapValues(value -> {
-                    BigDecimal exchangeRate = BigDecimal.valueOf(3.0);
+                    BigDecimal exchangeRate = BigDecimal.valueOf(USD_TO_BYN_RATE);
                     value.setPrice(value.getPrice().multiply(exchangeRate));
                     value.setCurrency(Currency.BYN);
                     return value;

@@ -1,6 +1,6 @@
 package com.solvd.micro9.scooters.service.impl;
 
-import com.solvd.micro9.scooters.messaging.StreamsConfig;
+import com.solvd.micro9.scooters.messaging.KStreamConfig;
 import com.solvd.micro9.scooters.service.KStreamsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.streams.KafkaStreams;
@@ -24,7 +24,7 @@ public class KStreamsServiceImpl implements KStreamsService {
         if (kafkaStreams != null) {
             ReadOnlyKeyValueStore<String, BigDecimal> usersExpenses = kafkaStreams.store(
                     StoreQueryParameters.fromNameAndType(
-                            StreamsConfig.USER_EXPENSES_VIEW,
+                            KStreamConfig.USER_EXPENSES_VIEW,
                             QueryableStoreTypes.keyValueStore()
                     )
             );

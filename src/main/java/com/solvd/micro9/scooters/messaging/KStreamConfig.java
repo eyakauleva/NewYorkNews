@@ -23,7 +23,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 @Component
-public class StreamsConfig {
+public class KStreamConfig {
 
     public static final String USER_EXPENSES_VIEW = "user-expense";
     private static final String SINK_TOPIC = "income";

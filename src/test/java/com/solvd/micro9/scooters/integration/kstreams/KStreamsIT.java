@@ -10,6 +10,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.state.KeyValueStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +36,7 @@ public class KStreamsIT extends KafkaTestcontainers {
     private TopologyTestDriver testDriver;
     private TestInputTopic<String, RentEvent> inputTopic;
     private TestOutputTopic<String, BigDecimal> outputTopic;
+    private KeyValueStore<String, BigDecimal> usersExpensesStore;
 
     @BeforeEach
     void setup() {
@@ -56,6 +59,8 @@ public class KStreamsIT extends KafkaTestcontainers {
                 Serdes.String().deserializer(),
                 CustomSerdes.BigDecimal().deserializer()
         );
+        usersExpensesStore =
+                testDriver.getKeyValueStore(KStreamConfig.USER_EXPENSES_STORE);
     }
 
     @AfterEach
@@ -93,6 +98,41 @@ public class KStreamsIT extends KafkaTestcontainers {
         BigDecimal finalResultValue = resultValues.get(resultValues.size() - 1);
         Assertions.assertEquals(resultIncome, finalResultValue);
         Assertions.assertTrue(outputTopic.isEmpty());
+    }
+
+    @Test
+    void verifyUsersExpensesSavedToStateStore() {
+        String userId = "11111";
+        RentEvent rentEvent = new FkRentEvent();
+        RentEvent rentEventWithUSD = new FkRentEvent();
+        rentEventWithUSD.setUserId(userId);
+        rentEventWithUSD.setCurrency(Currency.USD);
+        RentEvent rentEventEndedNotToday = new FkRentEvent();
+        rentEventEndedNotToday.setUserId(userId);
+        rentEventEndedNotToday.setEnded(LocalDateTime.now().withYear(2020));
+        List<RentEvent> rentEvents = List.of(
+                rentEvent,
+                rentEventWithUSD,
+                rentEventEndedNotToday
+        );
+        BigDecimal userExpectedIncome = BigDecimal.ZERO;
+        for (RentEvent event : rentEvents) {
+            inputTopic.pipeInput(event.getId(), event);
+            if (event.getUserId().equals(userId)
+                    && event.getEnded().toLocalDate().equals(LocalDate.now())) {
+                if (event.getCurrency().equals(Currency.USD)) {
+                    BigDecimal convertedToByn = event.getPrice().multiply(
+                            BigDecimal.valueOf(KStreamConfig.USD_TO_BYN_RATE)
+                    );
+                    userExpectedIncome = userExpectedIncome.add(convertedToByn);
+                } else {
+                    userExpectedIncome = userExpectedIncome.add(event.getPrice());
+                }
+            }
+        }
+        BigDecimal userResultIncome = usersExpensesStore.get(userId);
+        Assertions.assertNotNull(userResultIncome);
+        Assertions.assertEquals(userExpectedIncome, userResultIncome);
     }
 
 }

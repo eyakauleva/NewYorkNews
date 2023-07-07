@@ -25,7 +25,7 @@ import java.util.Map;
 @Component
 public class KStreamConfig {
 
-    public static final String USER_EXPENSES_VIEW = "user-expense";
+    public static final String USER_EXPENSES_STORE = "user-expense";
     public static final double USD_TO_BYN_RATE = 3.0;
     private static final String SINK_TOPIC = "income";
     private static final String SPLIT_BY_CURRENCY = "split-by-currency-";
@@ -73,7 +73,7 @@ public class KStreamConfig {
                         () -> BigDecimal.ZERO,
                         (key, value, aggregate) -> value.add(aggregate),
                         Materialized.<String, BigDecimal>as(
-                                        Stores.persistentKeyValueStore(USER_EXPENSES_VIEW)
+                                        Stores.persistentKeyValueStore(USER_EXPENSES_STORE)
                                 )
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(CustomSerdes.BigDecimal())

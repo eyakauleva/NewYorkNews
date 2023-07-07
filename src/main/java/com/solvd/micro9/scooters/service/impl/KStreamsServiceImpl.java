@@ -24,7 +24,7 @@ public class KStreamsServiceImpl implements KStreamsService {
         if (kafkaStreams != null) {
             ReadOnlyKeyValueStore<String, BigDecimal> usersExpenses = kafkaStreams.store(
                     StoreQueryParameters.fromNameAndType(
-                            KStreamConfig.USER_EXPENSES_VIEW,
+                            KStreamConfig.USER_EXPENSES_STORE,
                             QueryableStoreTypes.keyValueStore()
                     )
             );

@@ -8,6 +8,4 @@
     <suppress files="target/generated-sources/*" checks="[a-zA-Z0-9]*"/>
     <suppress files="src/main/java/com/solvd/micro9/scooters/StartApplication.java"
               checks="HideUtilityClassConstructor"/>
-    <suppress files="src/main/java/com/solvd/micro9/scooters/messaging/serde/CustomSerdes.java"
-              checks="MethodName"/>
 </suppressions>

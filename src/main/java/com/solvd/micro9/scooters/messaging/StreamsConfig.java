@@ -2,7 +2,7 @@ package com.solvd.micro9.scooters.messaging;
 
 import com.solvd.micro9.scooters.domain.Currency;
 import com.solvd.micro9.scooters.domain.RentEvent;
-import com.solvd.micro9.scooters.messaging.serde.CustomSerdes;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -35,11 +35,17 @@ public class StreamsConfig {
     private String sourceTopic;
 
     @Autowired
+    private Serde<RentEvent> rentEventSerde;
+
+    @Autowired
+    private Serde<BigDecimal> bigDecimalSerde;
+
+    @Autowired
     public void buildPipeline(final StreamsBuilder streamsBuilder) {
         Map<String, KStream<String, RentEvent>> eventsStream = streamsBuilder
                 .stream(
                         sourceTopic,
-                        Consumed.with(Serdes.String(), CustomSerdes.RentEvent())
+                        Consumed.with(Serdes.String(), rentEventSerde)
                 )
                 .split(Named.as(SPLIT_BY_CURRENCY))
                 .branch(
@@ -67,7 +73,7 @@ public class StreamsConfig {
                         .toLocalDate()
                         .equals(LocalDate.now()))
                 .map((key, value) -> new KeyValue<>(value.getUserId(), value.getPrice()))
-                .groupByKey(Grouped.with(Serdes.String(), CustomSerdes.BigDecimal()))
+                .groupByKey(Grouped.with(Serdes.String(), bigDecimalSerde))
                 .aggregate(
                         () -> BigDecimal.ZERO,
                         (key, value, aggregate) -> value.add(aggregate),
@@ -75,15 +81,15 @@ public class StreamsConfig {
                                         Stores.persistentKeyValueStore(USER_EXPENSES_VIEW)
                                 )
                                 .withKeySerde(Serdes.String())
-                                .withValueSerde(CustomSerdes.BigDecimal())
+                                .withValueSerde(bigDecimalSerde)
                 );
         mergedStreams
                 .selectKey((key, value) -> "income")
                 .mapValues(RentEvent::getPrice)
-                .groupByKey(Grouped.with(Serdes.String(), CustomSerdes.BigDecimal()))
+                .groupByKey(Grouped.with(Serdes.String(), bigDecimalSerde))
                 .reduce(BigDecimal::add)
                 .toStream()
-                .to(SINK_TOPIC, Produced.with(Serdes.String(), CustomSerdes.BigDecimal()));
+                .to(SINK_TOPIC, Produced.with(Serdes.String(), bigDecimalSerde));
     }
 
 }

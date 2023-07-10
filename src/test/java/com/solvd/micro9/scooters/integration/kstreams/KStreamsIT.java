@@ -4,6 +4,7 @@ import com.solvd.micro9.scooters.domain.Currency;
 import com.solvd.micro9.scooters.domain.RentEvent;
 import com.solvd.micro9.scooters.messaging.KStreamConfig;
 import com.solvd.micro9.scooters.messaging.serde.CustomSerdes;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -27,15 +28,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootTest(classes = {KStreamConfig.class, StreamsBuilder.class})
+@SpringBootTest(classes = {KStreamConfig.class, StreamsBuilder.class, CustomSerdes.class})
 @DirtiesContext
 public class KStreamsIT extends KafkaTestcontainers {
 
     @Autowired
     private KStreamConfig kStreamConfig;
+
+    @Autowired
+    private Serde<RentEvent> rentEventSerde;
+
+    @Autowired
+    private Serde<BigDecimal> bigDecimalSerde;
+
     private TopologyTestDriver testDriver;
+
     private TestInputTopic<String, RentEvent> inputTopic;
+
     private TestOutputTopic<String, BigDecimal> outputTopic;
+
     private KeyValueStore<String, BigDecimal> usersExpensesStore;
 
     @BeforeEach
@@ -45,7 +56,7 @@ public class KStreamsIT extends KafkaTestcontainers {
         testDriver = new TopologyTestDriver(
                 streamsBuilder.build(), this.getKafkaStreamProperties()
         );
-        Serializer<RentEvent> rentEventSerializer = CustomSerdes.RentEvent().serializer();
+        Serializer<RentEvent> rentEventSerializer = rentEventSerde.serializer();
         Map<String, Object> props = new HashMap<>();
         props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
         rentEventSerializer.configure(props, false);
@@ -57,7 +68,7 @@ public class KStreamsIT extends KafkaTestcontainers {
         outputTopic = testDriver.createOutputTopic(
                 "income",
                 Serdes.String().deserializer(),
-                CustomSerdes.BigDecimal().deserializer()
+                bigDecimalSerde.deserializer()
         );
         usersExpensesStore =
                 testDriver.getKeyValueStore(KStreamConfig.USER_EXPENSES_STORE);

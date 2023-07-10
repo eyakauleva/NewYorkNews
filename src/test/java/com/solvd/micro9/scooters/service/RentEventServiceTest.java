@@ -2,7 +2,7 @@ package com.solvd.micro9.scooters.service;
 
 import com.solvd.micro9.scooters.domain.Currency;
 import com.solvd.micro9.scooters.domain.RentEvent;
-import com.solvd.micro9.scooters.messaging.KfProducer;
+import com.solvd.micro9.scooters.messaging.RentEventProducer;
 import com.solvd.micro9.scooters.service.impl.RentEventServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class RentEventServiceTest {
 
     @Mock
-    private KfProducer kfProducer;
+    private RentEventProducer producer;
 
     @InjectMocks
     private RentEventServiceImpl rentEventService;
@@ -36,7 +36,7 @@ public class RentEventServiceTest {
                 .build();
         rentEventService.save(event);
         Assertions.assertNotNull(event.getId());
-        Mockito.verify(kfProducer, Mockito.times(1)).send(event);
+        Mockito.verify(producer, Mockito.times(1)).send(event);
     }
 
 }

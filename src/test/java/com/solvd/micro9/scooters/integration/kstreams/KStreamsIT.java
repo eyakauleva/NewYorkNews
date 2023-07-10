@@ -3,7 +3,7 @@ package com.solvd.micro9.scooters.integration.kstreams;
 import com.solvd.micro9.scooters.domain.Currency;
 import com.solvd.micro9.scooters.domain.RentEvent;
 import com.solvd.micro9.scooters.messaging.KStreamConfig;
-import com.solvd.micro9.scooters.messaging.serde.CustomSerdes;
+import com.solvd.micro9.scooters.messaging.serde.CustomSerde;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
@@ -28,18 +28,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootTest(classes = {KStreamConfig.class, StreamsBuilder.class, CustomSerdes.class})
+@SpringBootTest(classes = {KStreamConfig.class, StreamsBuilder.class})
 @DirtiesContext
 public class KStreamsIT extends KafkaTestcontainers {
 
     @Autowired
     private KStreamConfig kStreamConfig;
 
-    @Autowired
-    private Serde<RentEvent> rentEventSerde;
+    private final Serde<RentEvent> rentEventSerde =
+            new CustomSerde<>(RentEvent.class).getSerde();
 
-    @Autowired
-    private Serde<BigDecimal> bigDecimalSerde;
+    private final Serde<BigDecimal> bigDecimalSerde =
+            new CustomSerde<>(BigDecimal.class).getSerde();
 
     private TopologyTestDriver testDriver;
 

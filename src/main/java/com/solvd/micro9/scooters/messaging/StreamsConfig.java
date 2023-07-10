@@ -2,6 +2,7 @@ package com.solvd.micro9.scooters.messaging;
 
 import com.solvd.micro9.scooters.domain.Currency;
 import com.solvd.micro9.scooters.domain.RentEvent;
+import com.solvd.micro9.scooters.messaging.serde.CustomSerde;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
@@ -34,11 +35,11 @@ public class StreamsConfig {
     @Value("${spring.kafka.topic}")
     private String sourceTopic;
 
-    @Autowired
-    private Serde<RentEvent> rentEventSerde;
+    private final Serde<RentEvent> rentEventSerde =
+            new CustomSerde<>(RentEvent.class).getSerde();
 
-    @Autowired
-    private Serde<BigDecimal> bigDecimalSerde;
+    private final Serde<BigDecimal> bigDecimalSerde =
+            new CustomSerde<>(BigDecimal.class).getSerde();
 
     @Autowired
     public void buildPipeline(final StreamsBuilder streamsBuilder) {

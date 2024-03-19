@@ -27,8 +27,9 @@ import java.util.Map;
 public class KStreamConfig {
 
     public static final String USER_EXPENSES_STORE = "user-expense";
+    public static final String USERS_SINK_TOPIC = "users-income";
     public static final double USD_TO_BYN_RATE = 3.0;
-    private static final String SINK_TOPIC = "income";
+    private static final String GENERAL_SINK_TOPIC = "income";
     private static final String SPLIT_BY_CURRENCY = "split-by-currency-";
     private static final String USD_BRANCH = Currency.USD.name();
     private static final String BYN_BRANCH = Currency.BYN.name();
@@ -84,14 +85,16 @@ public class KStreamConfig {
                                 )
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(bigDecimalSerde)
-                );
+                )
+                .toStream()
+                .to(USERS_SINK_TOPIC, Produced.with(Serdes.String(), bigDecimalSerde));
         mergedStreams
                 .selectKey((key, value) -> "income")
                 .mapValues(RentEvent::getPrice)
                 .groupByKey(Grouped.with(Serdes.String(), bigDecimalSerde))
                 .reduce(BigDecimal::add)
                 .toStream()
-                .to(SINK_TOPIC, Produced.with(Serdes.String(), bigDecimalSerde));
+                .to(GENERAL_SINK_TOPIC, Produced.with(Serdes.String(), bigDecimalSerde));
     }
 
 }
